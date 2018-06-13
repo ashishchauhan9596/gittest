@@ -2,7 +2,7 @@
 
 ini_set('display_errors', 'On');
 error_reporting(E_ALL | E_STRICT);
-
+//require 'password.php';
 try{
     $pdo = new PDO("mysql:host=localhost;dbname=rightway", "root", "root");
 	    
@@ -16,13 +16,15 @@ try{
 	if (isset($_POST['submit'])) {
 
 		try{
-		    $sql = "INSERT INTO pdo (name, email,password) VALUES (:name,:email,:password)";
+		    $sql = "INSERT INTO pdo (name, email,password,hashpass) VALUES (:name,:email,:password,:hashpass)";
 
 		    $stmt = $pdo->prepare($sql);
 
 		    $stmt->bindParam(':name',$_REQUEST['name'],PDO::PARAM_STR);
 		    $stmt->bindParam(':email',$_REQUEST['email'],PDO::PARAM_STR);
 		    $stmt->bindParam(':password',$_REQUEST['password'],PDO::PARAM_STR);
+		    $stmt->bindParam(':hashpass',$passhash,PDO::PARAM_STR);
+		    $passhash = password_hash($_POST['password'], PASSWORD_DEFAULT);
 		    $stmt->execute();
 
 		    echo "Records inserted successfully.";
@@ -71,14 +73,33 @@ try{
 			            <th>id</th>
 			            <th>name</th>
 			            <th>email</th>
-			            <th>password</th>
+			            <th>validity of email</th>
+			            <th>hash password</th>
+			            <th>original password</th>
+			            <th>Validity of password</th>
 			        </tr>
 				    <?php while($row = $result->fetch()): ?>
 				    	<tr>
 					    	<td><?php echo $row['id']  ?></td>
 					    	<td><?php echo $row['name']  ?></td>
 					    	<td><?php echo $row['email']  ?></td>
+					    	<td><?php 
+					    			echo (filter_var($row['email'], FILTER_VALIDATE_EMAIL)) ?"Email is valid" : "Email is NOT valid";
+
+					    	  ?></td>
+					    	<td><?php echo $row['hashpass'] ?></td>
 					    	<td><?php echo $row['password'] ?></td>
+					    	<td>
+					    		<?php
+					    		$hash = $row['hashpass'];
+								if (password_verify($row['password'], $hash)) {
+								    echo 'Password is valid!';
+								} else {
+								    echo 'Invalid password.';
+								}
+
+					    		?>
+					    	</td>
 				    	</tr>
 				    <?php endwhile;?> 
 				</table> 
